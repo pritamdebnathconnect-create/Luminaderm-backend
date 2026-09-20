@@ -28,13 +28,9 @@ The project uses a **ResNet18 deep learning model** trained on a 7-class dermato
 
 The current LuminaDerm model is trained to classify the following **7 skin conditions**:
 
-1. Acne
-2. Eczema
-3. Impetigo
-4. Psoriasis
-5. Rosacea
-6. Tinea
-7. Vitiligo
+1. Eczema
+2. Psoriasis
+3. Vitiligo
 
 ---
 
