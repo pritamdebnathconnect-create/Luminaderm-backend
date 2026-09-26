@@ -133,7 +133,15 @@ class LuminaDermMultimodal(nn.Module):
 multimodal_model = None
 symptom_feature_columns = []
 condition_names = []
+MODEL_URL = "https://github.com/pritam-debnath-dev/Luminaderm-backend/releases/download/v1.0.0/luminaderm_multimodal.pt"
 
+if not os.path.exists(MULTIMODAL_MODEL_PATH):
+    print("Downloading LuminaDerm multimodal model...")
+    urllib.request.urlretrieve(
+        MODEL_URL,
+        MULTIMODAL_MODEL_PATH
+    )
+    print("Model download complete.")
 if os.path.exists(MULTIMODAL_MODEL_PATH):
     checkpoint = torch.load(
         MULTIMODAL_MODEL_PATH, map_location="cpu", weights_only=False
