@@ -9,6 +9,7 @@ import io
 import os
 import urllib.request
 import ast
+import gc
 
 app = FastAPI()
 
@@ -24,10 +25,33 @@ app.add_middleware(
 with open("class_names.json", "r") as f:
     class_names = json.load(f)
 
-model = models.resnet18(weights=None)
-model.fc = nn.Linear(model.fc.in_features, len(class_names))
-model.load_state_dict(torch.load("skin_model.pth", map_location="cpu"))
-model.eval()
+model = None
+
+def ensure_image_model_loaded():
+    global model
+
+    if model is not None:
+        return
+
+    print("Loading image-only model...")
+
+    model = models.resnet18(weights=None)
+    model.fc = nn.Linear(
+        model.fc.in_features,
+        len(class_names)
+    )
+
+    state_dict = torch.load(
+        "skin_model.pth",
+        map_location="cpu",
+        weights_only=True
+    )
+
+    model.load_state_dict(state_dict)
+    del state_dict
+
+    model.eval()
+    print("Image-only model loaded successfully.")
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -178,6 +202,9 @@ def ensure_multimodal_model_loaded():
     )
     multimodal_model.eval()
 
+    del checkpoint
+    gc.collect()
+
     print("Multimodal model loaded successfully.")
 
 
@@ -219,6 +246,7 @@ async def predict_multimodal(
     file: UploadFile = File(...),
     symptoms: str = Form(...),
 ):
+    ensure_image_model_loaded()
     """
     Multipart form:
       - file: image
