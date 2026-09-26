@@ -69,6 +69,8 @@ def home():
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     """Existing image-only endpoint."""
+    ensure_image_model_loaded()
+    
     try:
         image_bytes = await file.read()
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -246,7 +248,6 @@ async def predict_multimodal(
     file: UploadFile = File(...),
     symptoms: str = Form(...),
 ):
-    ensure_image_model_loaded()
     """
     Multipart form:
       - file: image
