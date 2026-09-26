@@ -7,6 +7,7 @@ from torchvision import models, transforms
 import json
 import io
 import os
+import urllib.request
 import ast
 
 app = FastAPI()
