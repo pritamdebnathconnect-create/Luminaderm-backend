@@ -133,27 +133,52 @@ class LuminaDermMultimodal(nn.Module):
 multimodal_model = None
 symptom_feature_columns = []
 condition_names = []
-MODEL_URL = "https://github.com/pritam-debnath-dev/Luminaderm-backend/releases/download/v1.0.0/luminaderm_multimodal.pt"
 
-if not os.path.exists(MULTIMODAL_MODEL_PATH):
-    print("Downloading LuminaDerm multimodal model...")
-    urllib.request.urlretrieve(
-        MODEL_URL,
-        MULTIMODAL_MODEL_PATH
-    )
-    print("Model download complete.")
-if os.path.exists(MULTIMODAL_MODEL_PATH):
+
+def ensure_multimodal_model_loaded():
+    global multimodal_model
+    global symptom_feature_columns
+    global condition_names
+
+    if multimodal_model is not None:
+        return
+
+    print("Downloading/loading LuminaDerm multimodal model...")
+
+    if not os.path.exists(MULTIMODAL_MODEL_PATH):
+        MODEL_URL = (
+            "https://github.com/pritam-debnath-dev/"
+            "Luminaderm-backend/releases/download/"
+            "v1.0.0/luminaderm_multimodal.pt"
+        )
+
+        urllib.request.urlretrieve(
+            MODEL_URL,
+            MULTIMODAL_MODEL_PATH
+        )
+
     checkpoint = torch.load(
-        MULTIMODAL_MODEL_PATH, map_location="cpu", weights_only=False
+        MULTIMODAL_MODEL_PATH,
+        map_location="cpu",
+        weights_only=False
     )
-    symptom_feature_columns = checkpoint["symptom_feature_columns"]
+
+    symptom_feature_columns = checkpoint[
+        "symptom_feature_columns"
+    ]
     condition_names = checkpoint["condition_names"]
+
     multimodal_model = LuminaDermMultimodal(
         symptom_dim=checkpoint["symptom_dim"],
         num_classes=len(condition_names),
     )
-    multimodal_model.load_state_dict(checkpoint["model_state_dict"])
+
+    multimodal_model.load_state_dict(
+        checkpoint["model_state_dict"]
+    )
     multimodal_model.eval()
+
+    print("Multimodal model loaded successfully.")
 
 
 def encode_symptoms(symptoms):
@@ -199,6 +224,8 @@ async def predict_multimodal(
       - file: image
       - symptoms: JSON object of raw symptom/history fields
     """
+    ensure_multimodal_model_loaded()
+    
     if multimodal_model is None:
         raise HTTPException(
             status_code=503,
